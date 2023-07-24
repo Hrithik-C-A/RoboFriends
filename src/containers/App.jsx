@@ -3,43 +3,46 @@ import CardList from '../components/CardList';
 import SearchBox from '../components/SearchBox';
 import Scroll from '../components/Scroll';
 import { connect } from 'react-redux';
-import { setSearchField } from '../action'
+import { setSearchField, requestRobots } from '../action'
 import './App.css';
+import ErrorBoundary from '../components/ErrorBoundry';
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
   return {
-    searchField: state.searchField
+    searchField: state.searchRobots.searchField,
+    robots: state.requestRobots.robots,
+    isPending: state.requestRobots.isPending
   }
 }
 
-const mapDispatchToProps = (dispatch) =>{
-  return {onSearchChange: (event) => dispatch(setSearchField(event.target.value)) 
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onSearchChange: (event) => dispatch(setSearchField(event.target.value)),
+    onRequestRobots: () => dispatch(requestRobots())
   }
 }
 
 function App(props){
-  const [robots, setRobots] = useState([]);
-  // const [searchField, setSearchField] = useState('');
-  // const onSearchChange = (event) => {
-  //   setSearchField(event.target.value);
-  // }
-  const {searchField, onSearchChange} = props;
+
+  const {searchField, onSearchChange , robots, isPending, onRequestRobots } = props;
   useEffect(()=>{
-    fetch('https://jsonplaceholder.typicode.com/users')
-    .then(response=> response.json())
-    .then(users => {setRobots(users)});
-  },[searchField])
+    onRequestRobots()
+  },[]);
   const filteredRobots = robots.filter(robot =>{
     return robot.name.toLowerCase().includes(searchField.toLowerCase());
   })
-  return !robots.length ?
-    <h1>Loading</h1> :
-    (
+  return(
       <div className='tc'>
         <h1 className='f1'>RoboFriends</h1>
         <SearchBox searchChange={onSearchChange}/>
         <Scroll>
-          <CardList robots={filteredRobots} />
+        {isPending ?
+          <h1>Loading</h1>
+           :
+           <ErrorBoundary>
+                <CardList robots={filteredRobots} />
+           </ErrorBoundary>
+        }
         </Scroll>
       </div>
     );
